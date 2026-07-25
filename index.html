@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0B0F14">
+<title>Slab Desk</title>
+<style>
+  :root{
+    --ink:#0B0F14;
+    --panel:#141B24;
+    --line:#22303D;
+    --slab:#E8EDF2;
+    --dim:#7C8FA0;
+    --live:#3DDC97;
+    --wait:#FFB020;
+    --stop:#FF5C5C;
+    --tap:#2E7DFF;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%}
+  body{
+    background:var(--ink);
+    color:var(--slab);
+    font:400 16px/1.4 ui-monospace,"SF Mono",Menlo,monospace;
+    padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+    display:flex;flex-direction:column;
+    -webkit-user-select:none;user-select:none;
+  }
+  header{
+    display:flex;align-items:baseline;gap:10px;
+    padding:14px 16px 10px;border-bottom:1px solid var(--line);
+  }
+  h1{margin:0;font-size:15px;letter-spacing:.16em;text-transform:uppercase;font-weight:600}
+  #count{margin-left:auto;font-size:13px;color:var(--dim);letter-spacing:.08em}
+  main{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:13px}
+
+  button{
+    font:inherit;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+    border:0;border-radius:12px;padding:17px;width:100%;color:#fff;
+    background:var(--tap);cursor:pointer;font-size:14px;
+  }
+  button:active{transform:translateY(1px)}
+  button.ghost{background:transparent;border:1px solid var(--line);color:var(--slab)}
+  button.armed{background:var(--live);color:var(--ink)}
+  button:disabled{opacity:.35}
+  button:focus-visible{outline:2px solid var(--slab);outline-offset:2px}
+
+  .cert{
+    border:1px solid var(--line);border-radius:14px;padding:16px;background:var(--panel);
+    transition:border-color .2s;
+  }
+  .cert.hot{border-color:var(--live)}
+  .lab{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);margin-bottom:8px}
+  #certNum{font-size:30px;font-weight:600;letter-spacing:.04em;word-break:break-all}
+  #certNum.empty{color:var(--line)}
+
+  #trap{position:absolute;opacity:0;pointer-events:none;height:0;width:0;border:0}
+
+  .row{display:flex;gap:10px}
+  .row>*{flex:1}
+
+  /* ---------- value block ---------- */
+  .valbox{
+    border:1px solid var(--line);border-radius:14px;padding:16px 16px 18px;
+    background:var(--panel);display:flex;flex-direction:column;gap:14px;
+  }
+  .valtop{display:flex;align-items:baseline;gap:6px}
+  .valtop .cur{font-size:21px;color:var(--dim)}
+  #valNum{
+    font-size:34px;font-weight:600;letter-spacing:.02em;
+    font-variant-numeric:tabular-nums;
+  }
+  #valNum.empty{color:var(--line)}
+  .valtop .lab{margin:0 0 0 auto;align-self:center}
+
+  input[type=range]{
+    -webkit-appearance:none;appearance:none;
+    width:100%;height:34px;background:transparent;margin:0;
+  }
+  input[type=range]::-webkit-slider-runnable-track{
+    height:6px;border-radius:3px;background:var(--line);
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;appearance:none;
+    width:30px;height:30px;border-radius:50%;
+    background:var(--tap);border:3px solid var(--panel);
+    margin-top:-12px;
+  }
+  input[type=range]::-moz-range-track{height:6px;border-radius:3px;background:var(--line)}
+  input[type=range]::-moz-range-thumb{
+    width:24px;height:24px;border-radius:50%;border:3px solid var(--panel);
+    background:var(--tap);
+  }
+  input[type=range]:focus-visible::-webkit-slider-thumb{outline:2px solid var(--slab);outline-offset:2px}
+
+  .ticks{
+    display:flex;justify-content:space-between;
+    font-size:10px;color:var(--dim);letter-spacing:.06em;margin-top:-10px;
+  }
+
+  .steppers{display:flex;flex-direction:column;gap:8px}
+  .steprow{display:flex;gap:8px}
+  .steprow button{
+    flex:1;padding:14px 0;font-size:14px;letter-spacing:.02em;
+    background:var(--ink);border:1px solid var(--line);color:var(--slab);
+  }
+  .steprow button:active{background:var(--line)}
+  .steprow .zero{color:var(--stop);letter-spacing:.1em}
+
+  #log{
+    border-top:1px solid var(--line);padding-top:12px;
+    display:flex;flex-direction:column;gap:7px;font-size:12px;color:var(--dim);
+  }
+  .entry{display:flex;gap:10px;align-items:center;letter-spacing:.04em}
+  .dot{width:6px;height:6px;border-radius:50%;flex:none}
+  .ok .dot{background:var(--live)}
+  .pend .dot{background:var(--wait)}
+  .err .dot{background:var(--stop)}
+  .entry b{color:var(--slab);font-weight:600}
+  .entry span{margin-left:auto;font-variant-numeric:tabular-nums}
+
+  #toast{
+    position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));
+    background:var(--slab);color:var(--ink);padding:14px 16px;border-radius:12px;
+    font-size:13px;font-weight:600;letter-spacing:.04em;
+    transform:translateY(140%);transition:transform .22s;z-index:9;
+  }
+  #toast.up{transform:none}
+  #toast.bad{background:var(--stop);color:#fff}
+
+  .hint{font-size:12px;color:var(--dim);line-height:1.5;letter-spacing:.03em;margin:0}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Slab Desk</h1>
+  <div id="count">0 saved</div>
+</header>
+
+<main>
+
+  <input id="trap" autocomplete="off">
+
+  <button id="scanBtn">Scan slab</button>
+
+  <div class="cert" id="certBox">
+    <div class="lab">Cert number</div>
+    <div id="certNum" class="empty">—</div>
+  </div>
+
+  <div class="row">
+    <button id="clBtn" class="ghost" disabled>Open Card Ladder</button>
+    <button id="psaBtn" class="ghost" disabled>Open PSA</button>
+  </div>
+
+  <div class="valbox">
+    <div class="valtop">
+      <span class="cur">$</span>
+      <span id="valNum" class="empty">0</span>
+      <div class="lab">Card Ladder value</div>
+    </div>
+
+    <input type="range" id="slider" min="0" max="1000" value="0" step="1">
+    <div class="ticks"><span>0</span><span>100</span><span>500</span><span>2K</span><span>10K</span></div>
+
+    <div class="steppers">
+      <div class="steprow">
+        <button data-d="-100">−100</button>
+        <button data-d="-10">−10</button>
+        <button data-d="10">+10</button>
+        <button data-d="100">+100</button>
+      </div>
+      <div class="steprow">
+        <button data-d="-1">−1</button>
+        <button data-d="1">+1</button>
+        <button data-d="zero" class="zero">Clear</button>
+      </div>
+    </div>
+  </div>
+
+  <button id="saveBtn" disabled>Save row</button>
+
+  <p class="hint">Drag to get close, then step to the exact number. Saving re-arms for the next slab.</p>
+
+  <button id="testBtn" class="ghost">Test connection</button>
+
+  <div id="log"></div>
+
+</main>
+
+<div id="toast"></div>
+
+<script>
+/* ============================================================
+   CONFIG
+   ============================================================ */
+const ENDPOINT = "https://script.google.com/macros/s/AKfycbzHEm1qdWR2HZuWLzkvI-t2ZOpV_LODmPTH1ffoe9bhfTDSqPQSdM-J4RNoi-FVqQvVtQ/exec";
+
+const CARD_LADDER = "https://www.cardladder.com/search?query=";
+
+const MAXV = 10000;
+
+const $ = id => document.getElementById(id);
+let cert = "";
+let val  = 0;
+let armed = false;
+let saved = 0;
+
+/* ------------------------------------------------------------
+   Non-linear slider mapping.
+
+   A straight 0-10000 drag gives you ~26 dollars per pixel, which is
+   useless for a $40 card. This curve spends most of the travel down
+   low where cards actually sit:
+
+     first  55% of the drag ->    $0 - 500   (~$1 steps)
+     next   25%             ->  $500 - 2000
+     last   20%             -> $2000 - 10000
+
+   Slider position runs 0-1000 internally for resolution.
+------------------------------------------------------------- */
+function posToVal(p){
+  const t = p / 1000;
+  if(t <= 0.55) return Math.round((t / 0.55) * 500);
+  if(t <= 0.80) return Math.round(500 + ((t - 0.55) / 0.25) * 1500);
+  return Math.round(2000 + ((t - 0.80) / 0.20) * 8000);
+}
+
+function valToPos(v){
+  if(v <= 500)  return Math.round((v / 500) * 0.55 * 1000);
+  if(v <= 2000) return Math.round((0.55 + ((v - 500) / 1500) * 0.25) * 1000);
+  return Math.round((0.80 + ((v - 2000) / 8000) * 0.20) * 1000);
+}
+
+function setVal(v, fromSlider){
+  val = Math.max(0, Math.min(MAXV, Math.round(v)));
+  $("valNum").textContent = val.toLocaleString();
+  $("valNum").classList.toggle("empty", val === 0);
+  if(!fromSlider) $("slider").value = valToPos(val);
+}
+
+$("slider").addEventListener("input", e => {
+  setVal(posToVal(+e.target.value), true);
+});
+
+document.querySelectorAll(".steprow button").forEach(b => {
+  b.addEventListener("click", () => {
+    if(navigator.vibrate) navigator.vibrate(10);
+    const d = b.dataset.d;
+    if(d === "zero") setVal(0);
+    else setVal(val + (+d));
+  });
+});
+
+/* ---------- toast ---------- */
+let toastTimer;
+function toast(msg, bad, ms){
+  const t = $("toast");
+  t.textContent = msg;
+  t.className = "up" + (bad ? " bad" : "");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.className = "", ms || 2600);
+}
+
+/* ---------- cert ---------- */
+function setCert(n){
+  cert = String(n).replace(/\D/g, "");
+  $("certNum").textContent = cert || "—";
+  $("certNum").classList.toggle("empty", !cert);
+  $("clBtn").disabled = !cert;
+  $("psaBtn").disabled = !cert;
+  $("saveBtn").disabled = !cert;
+}
+
+/* ---------- scanner ---------- */
+function arm(){
+  armed = true;
+  $("scanBtn").textContent = "Ready — scan now";
+  $("scanBtn").classList.add("armed");
+  $("certBox").classList.add("hot");
+  const t = $("trap");
+  t.value = "";
+  t.focus();
+}
+
+function disarm(){
+  armed = false;
+  $("scanBtn").textContent = "Scan slab";
+  $("scanBtn").classList.remove("armed");
+  $("certBox").classList.remove("hot");
+  $("trap").blur();
+}
+
+$("trap").addEventListener("keydown", e => {
+  if(e.key === "Enter"){
+    e.preventDefault();
+    const code = $("trap").value.trim();
+    $("trap").value = "";
+    if(code){
+      setCert(code);
+      setVal(0);
+      if(navigator.vibrate) navigator.vibrate(35);
+      toast("Scanned " + cert);
+      disarm();
+    }
+  }
+});
+
+$("trap").addEventListener("blur", () => {
+  if(armed) setTimeout(() => { if(armed) $("trap").focus(); }, 60);
+});
+
+/* ---------- saving ---------- */
+async function post(params){
+  const url = ENDPOINT + "?" + new URLSearchParams(params).toString();
+  const res = await fetch(url, {method:"GET", redirect:"follow"});
+  if(!res.ok) throw new Error("HTTP " + res.status);
+  return res.json();
+}
+
+async function send(certNum, value){
+  const line = addEntry(certNum, value);
+  try{
+    const out = await post({cert:certNum, value:value || ""});
+    if(out.error) throw new Error(out.error);
+    line.className = "entry ok";
+    saved++;
+    $("count").textContent = saved + " saved";
+    return true;
+  }catch(err){
+    line.className = "entry err";
+    toast("Save failed: " + err.message, true, 5000);
+    return false;
+  }
+}
+
+function addEntry(certNum, value){
+  const d = document.createElement("div");
+  d.className = "entry pend";
+  d.innerHTML = '<i class="dot"></i><b>' + certNum + '</b><span>' +
+                (value ? "$" + Number(value).toLocaleString() : "—") + '</span>';
+  $("log").prepend(d);
+  return d;
+}
+
+/* ---------- buttons ---------- */
+$("scanBtn").onclick = () => armed ? disarm() : arm();
+
+$("clBtn").onclick = () =>
+  window.open(CARD_LADDER + encodeURIComponent(cert), "_blank");
+
+$("psaBtn").onclick = () =>
+  window.open("https://www.psacard.com/cert/" + cert + "/psa", "_blank");
+
+$("saveBtn").onclick = async () => {
+  if(!cert) return;
+  toast("Saving…");
+  const ok = await send(cert, val || "");
+  if(ok){
+    toast(val ? "Saved " + cert + " → $" + val.toLocaleString() : "Saved " + cert);
+    setVal(0);
+    setCert("");
+    arm();
+  }
+};
+
+$("testBtn").onclick = async () => {
+  toast("Testing…");
+  try{
+    const out = await post({ping:"1"});
+    toast(out.status ? "Connected — " + out.status : "Reached it, odd reply", false, 4000);
+  }catch(err){
+    toast("No connection: " + err.message, true, 6000);
+  }
+};
+
+document.addEventListener("visibilitychange", () => {
+  if(!document.hidden && armed) $("trap").focus();
+});
+</script>
+</body>
+</html>

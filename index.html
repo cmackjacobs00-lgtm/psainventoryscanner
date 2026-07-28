@@ -4,384 +4,333 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#0B0F14">
-<title>Slab Desk</title>
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#F7F5EF">
+<title>Slab Ledger</title>
 <style>
   :root{
-    --ink:#0B0F14;
-    --panel:#141B24;
-    --line:#22303D;
-    --slab:#E8EDF2;
-    --dim:#7C8FA0;
-    --live:#3DDC97;
-    --wait:#FFB020;
-    --stop:#FF5C5C;
-    --tap:#2E7DFF;
+    --paper:#F7F5EF;
+    --card:#FFFFFF;
+    --ink:#1C2530;
+    --soft:#6B7480;
+    --rule:#E4E0D6;
+    --blue:#1F4E8C;
+    --blue-press:#173a68;
+    --green:#2E7D5B;
+    --red:#B03A2E;
+    --red-press:#8f2d23;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;height:100%}
   body{
-    background:var(--ink);
-    color:var(--slab);
-    font:400 16px/1.4 ui-monospace,"SF Mono",Menlo,monospace;
+    background:var(--paper);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:16px;line-height:1.4;
     padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
-    display:flex;flex-direction:column;
+    display:flex;flex-direction:column;height:100vh;
     -webkit-user-select:none;user-select:none;
   }
+
   header{
-    display:flex;align-items:baseline;gap:10px;
-    padding:14px 16px 10px;border-bottom:1px solid var(--line);
+    flex:none;padding:16px 18px 12px;border-bottom:1px solid var(--rule);
+    display:flex;align-items:baseline;gap:12px;background:var(--paper);
   }
-  h1{margin:0;font-size:15px;letter-spacing:.16em;text-transform:uppercase;font-weight:600}
-  #count{margin-left:auto;font-size:13px;color:var(--dim);letter-spacing:.08em}
-  main{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:13px}
+  .brand{
+    font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;
+    font-size:21px;font-weight:600;
+  }
+  .brand .dot{color:var(--blue)}
+  .tally{margin-left:auto;text-align:right;line-height:1.25}
+  #count{font-size:13px;color:var(--soft);font-variant-numeric:tabular-nums;display:block}
+  #total{font-size:16px;color:var(--ink);font-weight:700;font-variant-numeric:tabular-nums}
 
+  .actions{flex:none;display:flex;padding:12px 18px}
   button{
-    font:inherit;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
-    border:0;border-radius:12px;padding:17px;width:100%;color:#fff;
-    background:var(--tap);cursor:pointer;font-size:14px;
+    font:inherit;font-weight:600;font-size:15px;
+    border:0;border-radius:10px;padding:14px 16px;cursor:pointer;
+    background:var(--blue);color:#fff;
   }
-  button:active{transform:translateY(1px)}
-  button.ghost{background:transparent;border:1px solid var(--line);color:var(--slab)}
-  button.armed{background:var(--live);color:var(--ink)}
-  button:disabled{opacity:.35}
-  button:focus-visible{outline:2px solid var(--slab);outline-offset:2px}
+  button:active{background:var(--blue-press)}
+  .scan{flex:1;display:flex;align-items:center;justify-content:center;gap:9px;font-size:16px}
+  .scan.armed{background:var(--green)}
+  .scan svg{width:18px;height:18px;stroke:#fff;stroke-width:2;fill:none}
 
-  .cert{
-    border:1px solid var(--line);border-radius:14px;padding:16px;background:var(--panel);
-    transition:border-color .2s;
+  .head{
+    flex:none;display:flex;padding:6px 18px;border-bottom:1px solid var(--rule);
+    font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--soft);font-weight:600;
   }
-  .cert.hot{border-color:var(--live)}
-  .lab{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);margin-bottom:8px}
-  #certNum{font-size:30px;font-weight:600;letter-spacing:.04em;word-break:break-all}
-  #certNum.empty{color:var(--line)}
+  .head .h-cert{flex:1}
+  .head .h-paid{width:118px;text-align:right}
+  .head .h-x{width:36px}
 
-  #trap{position:absolute;opacity:0;pointer-events:none;height:0;width:0;border:0}
-
-  .row{display:flex;gap:10px}
-  .row>*{flex:1}
-
-  /* ---------- value block ---------- */
-  .valbox{
-    border:1px solid var(--line);border-radius:14px;padding:16px 16px 18px;
-    background:var(--panel);display:flex;flex-direction:column;gap:14px;
+  .scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .rowline{
+    display:flex;align-items:center;padding:0 18px;
+    border-bottom:1px solid var(--rule);background:var(--paper);
   }
-  .valtop{display:flex;align-items:baseline;gap:6px}
-  .valtop .cur{font-size:21px;color:var(--dim)}
-  #valNum{
-    font-size:34px;font-weight:600;letter-spacing:.02em;
+  .rowline:nth-child(even){background:#FBFAF6}
+  .cell{
+    padding:14px 2px;outline:none;-webkit-user-select:text;user-select:text;
     font-variant-numeric:tabular-nums;
   }
-  #valNum.empty{color:var(--line)}
-  .valtop .lab{margin:0 0 0 auto;align-self:center}
+  .c-cert{flex:1;font-size:20px;font-weight:700;letter-spacing:.01em;color:var(--ink)}
+  .c-cert:empty::before{content:"—";color:var(--rule);font-weight:400}
+  .c-paid{width:118px;text-align:right;color:var(--ink);font-weight:700;font-size:20px}
+  .c-paid .pre{color:var(--soft);font-weight:600}
+  .c-paid:empty::before{content:"add $";color:var(--soft);font-weight:400;font-size:14px}
+  .cell:focus{background:#FFF7DE;border-radius:5px}
+  .c-x{width:36px;display:flex;align-items:center;justify-content:flex-end}
+  .c-x button{background:none;color:var(--red);padding:12px 2px 12px 12px;font-size:16px;font-weight:400}
 
-  input[type=range]{
-    -webkit-appearance:none;appearance:none;
-    width:100%;height:34px;background:transparent;margin:0;
-  }
-  input[type=range]::-webkit-slider-runnable-track{
-    height:6px;border-radius:3px;background:var(--line);
-  }
-  input[type=range]::-webkit-slider-thumb{
-    -webkit-appearance:none;appearance:none;
-    width:30px;height:30px;border-radius:50%;
-    background:var(--tap);border:3px solid var(--panel);
-    margin-top:-12px;
-  }
-  input[type=range]::-moz-range-track{height:6px;border-radius:3px;background:var(--line)}
-  input[type=range]::-moz-range-thumb{
-    width:24px;height:24px;border-radius:50%;border:3px solid var(--panel);
-    background:var(--tap);
-  }
-  input[type=range]:focus-visible::-webkit-slider-thumb{outline:2px solid var(--slab);outline-offset:2px}
+  .empty{padding:56px 30px;text-align:center;color:var(--soft);font-size:15px;line-height:1.7}
+  .empty b{color:var(--blue)}
 
-  .ticks{
-    display:flex;justify-content:space-between;
-    font-size:10px;color:var(--dim);letter-spacing:.06em;margin-top:-10px;
+  /* modals */
+  .modal-bg{
+    position:fixed;inset:0;background:rgba(28,37,48,.34);z-index:30;
+    display:none;align-items:center;justify-content:center;padding:24px;
   }
-
-  .steppers{display:flex;flex-direction:column;gap:8px}
-  .steprow{display:flex;gap:8px}
-  .steprow button{
-    flex:1;padding:14px 0;font-size:14px;letter-spacing:.02em;
-    background:var(--ink);border:1px solid var(--line);color:var(--slab);
+  .modal-bg.show{display:flex}
+  .modal{
+    background:var(--card);width:100%;max-width:340px;border-radius:16px;
+    padding:22px 22px 20px;box-shadow:0 20px 50px rgba(28,37,48,.28);
   }
-  .steprow button:active{background:var(--line)}
-  .steprow .zero{color:var(--stop);letter-spacing:.1em}
-
-  #log{
-    border-top:1px solid var(--line);padding-top:12px;
-    display:flex;flex-direction:column;gap:7px;font-size:12px;color:var(--dim);
+  .modal .lab{font-size:13px;color:var(--soft);margin-bottom:3px}
+  .modal .cert-echo{font-size:15px;color:var(--ink);margin-bottom:18px;font-variant-numeric:tabular-nums;font-weight:600}
+  .amount{
+    display:flex;align-items:center;gap:8px;
+    border:1.5px solid var(--rule);border-radius:12px;padding:14px 18px;margin-bottom:18px;
   }
-  .entry{display:flex;gap:10px;align-items:center;letter-spacing:.04em}
-  .dot{width:6px;height:6px;border-radius:50%;flex:none}
-  .ok .dot{background:var(--live)}
-  .pend .dot{background:var(--wait)}
-  .err .dot{background:var(--stop)}
-  .entry b{color:var(--slab);font-weight:600}
-  .entry span{margin-left:auto;font-variant-numeric:tabular-nums}
-
-  #toast{
-    position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));
-    background:var(--slab);color:var(--ink);padding:14px 16px;border-radius:12px;
-    font-size:13px;font-weight:600;letter-spacing:.04em;
-    transform:translateY(140%);transition:transform .22s;z-index:9;
+  .amount:focus-within{border-color:var(--blue)}
+  .amount .sym{font-size:30px;color:var(--soft);font-weight:700}
+  .amount input{
+    border:0;outline:none;font:inherit;font-size:34px;font-weight:700;width:100%;
+    background:none;color:var(--ink);font-variant-numeric:tabular-nums;
   }
-  #toast.up{transform:none}
-  #toast.bad{background:var(--stop);color:#fff}
+  .modal-btns{display:flex;gap:10px}
+  .modal-btns button{flex:1}
+  .modal-btns .skip{background:var(--card);border:1px solid var(--rule);color:var(--soft);font-weight:500}
 
-  .hint{font-size:12px;color:var(--dim);line-height:1.5;letter-spacing:.03em;margin:0}
+  /* delete confirm */
+  .del-modal .warn{font-size:17px;font-weight:700;color:var(--ink);margin-bottom:6px}
+  .del-modal .sub{font-size:14px;color:var(--soft);margin-bottom:6px}
+  .del-modal .which{
+    font-size:18px;font-weight:700;color:var(--red);margin-bottom:18px;
+    font-variant-numeric:tabular-nums;word-break:break-all;
+  }
+  .del-modal .go{background:var(--red)}
+  .del-modal .go:active{background:var(--red-press)}
+
+  #trap{position:absolute;opacity:0;pointer-events:none;height:0;width:0}
+
+  .foot{flex:none;display:flex;padding:11px 18px;border-top:1px solid var(--rule);background:var(--paper)}
+  .foot button{flex:1;background:var(--card);color:var(--ink);border:1px solid var(--rule);font-weight:500}
+  .foot button:active{background:#efece4}
   @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
 
 <header>
-  <h1>Slab Desk</h1>
-  <div id="count">0 saved</div>
+  <span class="brand">Slab Ledger<span class="dot">.</span></span>
+  <span class="tally">
+    <span id="count">0 cards</span>
+    <span id="total">$0</span>
+  </span>
 </header>
 
-<main>
+<div class="actions">
+  <button class="scan" id="scanBtn">
+    <svg viewBox="0 0 24 24"><path d="M3 5v14M7 5v14M11 5v14M15 5v14M19 5v14"/></svg>
+    <span id="scanLabel">Scan slab</span>
+  </button>
+</div>
 
-  <input id="trap" autocomplete="off">
+<div class="head">
+  <div class="h-cert">Cert number</div>
+  <div class="h-paid">Paid</div>
+  <div class="h-x"></div>
+</div>
 
-  <button id="scanBtn">Scan slab</button>
-
-  <div class="cert" id="certBox">
-    <div class="lab">Cert number</div>
-    <div id="certNum" class="empty">—</div>
+<div class="scroll" id="scroll">
+  <div class="empty" id="empty">
+    Tap <b>Scan slab</b> and scan a PSA barcode.<br>
+    Each cert lands here — enter what you paid, and keep scanning.
   </div>
+</div>
 
-  <div class="row">
-    <button id="clBtn" class="ghost" disabled>Open Card Ladder</button>
-    <button id="psaBtn" class="ghost" disabled>Open PSA</button>
-  </div>
+<div class="foot">
+  <button id="copyBtn">Copy for spreadsheet</button>
+</div>
 
-  <div class="valbox">
-    <div class="valtop">
-      <span class="cur">$</span>
-      <span id="valNum" class="empty">0</span>
-      <div class="lab">Card Ladder value</div>
+<input id="trap" autocomplete="off" inputmode="none">
+
+<!-- paid entry -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <div class="lab">How much did you pay?</div>
+    <div class="cert-echo" id="modalCert">Cert —</div>
+    <div class="amount">
+      <span class="sym">$</span>
+      <input id="paidInput" type="text" inputmode="decimal" placeholder="0.00">
     </div>
-
-    <input type="range" id="slider" min="0" max="1000" value="0" step="1">
-    <div class="ticks"><span>0</span><span>100</span><span>500</span><span>2K</span><span>10K</span></div>
-
-    <div class="steppers">
-      <div class="steprow">
-        <button data-d="-100">−100</button>
-        <button data-d="-10">−10</button>
-        <button data-d="10">+10</button>
-        <button data-d="100">+100</button>
-      </div>
-      <div class="steprow">
-        <button data-d="-1">−1</button>
-        <button data-d="1">+1</button>
-        <button data-d="zero" class="zero">Clear</button>
-      </div>
+    <div class="modal-btns">
+      <button class="skip" id="skipPaid">Skip</button>
+      <button id="savePaid">Confirm</button>
     </div>
   </div>
+</div>
 
-  <button id="saveBtn" disabled>Save row</button>
-
-  <p class="hint">Drag to get close, then step to the exact number. Saving re-arms for the next slab.</p>
-
-  <button id="testBtn" class="ghost">Test connection</button>
-
-  <div id="log"></div>
-
-</main>
-
-<div id="toast"></div>
+<!-- delete confirm -->
+<div class="modal-bg" id="delBg">
+  <div class="modal del-modal">
+    <div class="warn">Delete this row?</div>
+    <div class="sub">This can't be undone.</div>
+    <div class="which" id="delWhich">Cert —</div>
+    <div class="modal-btns">
+      <button class="skip" id="delCancel">Keep</button>
+      <button class="go" id="delGo">Delete</button>
+    </div>
+  </div>
+</div>
 
 <script>
-/* ============================================================
-   CONFIG
-   ============================================================ */
-const ENDPOINT = "https://script.google.com/macros/s/AKfycbzHEm1qdWR2HZuWLzkvI-t2ZOpV_LODmPTH1ffoe9bhfTDSqPQSdM-J4RNoi-FVqQvVtQ/exec";
-
-const CARD_LADDER = "https://www.cardladder.com/search?query=";
-
-const MAXV = 10000;
-
 const $ = id => document.getElementById(id);
-let cert = "";
-let val  = 0;
+const STORE = "slabLedger.rows";
+
+let rows = load();
+let uid = rows.reduce((m,r)=>Math.max(m,r.id),0);
 let armed = false;
-let saved = 0;
+let pendingId = null;   // row awaiting paid amount
+let deleteId = null;    // row awaiting delete confirm
 
-/* ------------------------------------------------------------
-   Non-linear slider mapping.
+function save(){ try{ localStorage.setItem(STORE, JSON.stringify(rows)); }catch(e){} }
+function load(){ try{ return JSON.parse(localStorage.getItem(STORE)||"[]"); }catch(e){ return []; } }
 
-   A straight 0-10000 drag gives you ~26 dollars per pixel, which is
-   useless for a $40 card. This curve spends most of the travel down
-   low where cards actually sit:
+function render(){
+  const s=$("scroll");
+  s.querySelectorAll(".rowline").forEach(n=>n.remove());
+  $("empty").style.display = rows.length? "none":"block";
 
-     first  55% of the drag ->    $0 - 500   (~$1 steps)
-     next   25%             ->  $500 - 2000
-     last   20%             -> $2000 - 10000
+  const n=rows.length;
+  $("count").textContent = n + (n===1?" card":" cards");
+  const sum=rows.reduce((t,r)=>t + (parseFloat(r.paid)||0), 0);
+  $("total").textContent = "$" + sum.toLocaleString(undefined,{minimumFractionDigits: sum%1?2:0, maximumFractionDigits:2});
 
-   Slider position runs 0-1000 internally for resolution.
-------------------------------------------------------------- */
-function posToVal(p){
-  const t = p / 1000;
-  if(t <= 0.55) return Math.round((t / 0.55) * 500);
-  if(t <= 0.80) return Math.round(500 + ((t - 0.55) / 0.25) * 1500);
-  return Math.round(2000 + ((t - 0.80) / 0.20) * 8000);
-}
-
-function valToPos(v){
-  if(v <= 500)  return Math.round((v / 500) * 0.55 * 1000);
-  if(v <= 2000) return Math.round((0.55 + ((v - 500) / 1500) * 0.25) * 1000);
-  return Math.round((0.80 + ((v - 2000) / 8000) * 0.20) * 1000);
-}
-
-function setVal(v, fromSlider){
-  val = Math.max(0, Math.min(MAXV, Math.round(v)));
-  $("valNum").textContent = val.toLocaleString();
-  $("valNum").classList.toggle("empty", val === 0);
-  if(!fromSlider) $("slider").value = valToPos(val);
-}
-
-$("slider").addEventListener("input", e => {
-  setVal(posToVal(+e.target.value), true);
-});
-
-document.querySelectorAll(".steprow button").forEach(b => {
-  b.addEventListener("click", () => {
-    if(navigator.vibrate) navigator.vibrate(10);
-    const d = b.dataset.d;
-    if(d === "zero") setVal(0);
-    else setVal(val + (+d));
+  const frag=document.createDocumentFragment();
+  rows.forEach(r=>{
+    const div=document.createElement("div");
+    div.className="rowline";
+    div.innerHTML=
+      '<div class="cell c-cert" data-f="cert" data-id="'+r.id+'" contenteditable>'+esc(r.cert)+'</div>'+
+      '<div class="cell c-paid" data-f="paid" data-id="'+r.id+'" contenteditable>'+
+        (r.paid?'<span class="pre">$</span>'+esc(r.paid):'')+'</div>'+
+      '<div class="c-x"><button data-del="'+r.id+'">✕</button></div>';
+    frag.appendChild(div);
   });
+  s.appendChild(frag);
+}
+function esc(s){return String(s==null?"":s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+
+$("scroll").addEventListener("focusout", e=>{
+  const el=e.target.closest("[data-id]"); if(!el)return;
+  const r=rows.find(x=>x.id==el.dataset.id); if(!r)return;
+  let txt=el.textContent.replace(/\$/g,"").trim();
+  if(el.dataset.f==="cert") r.cert=txt.replace(/\D/g,"");
+  else r.paid=txt.replace(/[^\d.]/g,"");
+  save(); render();
 });
 
-/* ---------- toast ---------- */
-let toastTimer;
-function toast(msg, bad, ms){
-  const t = $("toast");
-  t.textContent = msg;
-  t.className = "up" + (bad ? " bad" : "");
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.className = "", ms || 2600);
+/* delete goes through a confirm modal */
+$("scroll").addEventListener("click", e=>{
+  const d=e.target.closest("[data-del]");
+  if(d){ askDelete(d.dataset.del); }
+});
+function askDelete(id){
+  deleteId=id;
+  const r=rows.find(x=>x.id==id);
+  $("delWhich").textContent = r && r.cert ? ("Cert "+r.cert) : "This row";
+  $("delBg").classList.add("show");
+}
+$("delGo").onclick=()=>{
+  rows=rows.filter(x=>x.id!=deleteId);
+  save(); render();
+  $("delBg").classList.remove("show"); deleteId=null;
+  if(armed) rearm();
+};
+$("delCancel").onclick=()=>{ $("delBg").classList.remove("show"); deleteId=null; if(armed) rearm(); };
+$("delBg").addEventListener("click",e=>{ if(e.target===$("delBg")) $("delCancel").click(); });
+
+/* scan adds a row */
+function addCert(cert){
+  const r={id:++uid, cert:cert, paid:""};
+  rows.unshift(r); save(); render();
+  openPaid(r.id, cert);
 }
 
-/* ---------- cert ---------- */
-function setCert(n){
-  cert = String(n).replace(/\D/g, "");
-  $("certNum").textContent = cert || "—";
-  $("certNum").classList.toggle("empty", !cert);
-  $("clBtn").disabled = !cert;
-  $("psaBtn").disabled = !cert;
-  $("saveBtn").disabled = !cert;
+/* paid modal */
+function openPaid(id, cert){
+  pendingId=id;
+  $("modalCert").textContent="Cert "+cert;
+  $("paidInput").value="";
+  $("modalBg").classList.add("show");
+  setTimeout(()=>$("paidInput").focus(),80);
 }
+function closePaid(){ $("modalBg").classList.remove("show"); pendingId=null; if(armed) rearm(); }
 
-/* ---------- scanner ---------- */
+$("savePaid").onclick=()=>{
+  const v=$("paidInput").value.replace(/[^\d.]/g,"");
+  const r=rows.find(x=>x.id==pendingId);
+  if(r){ r.paid=v; save(); render(); }
+  closePaid();
+};
+$("skipPaid").onclick=closePaid;
+$("paidInput").addEventListener("keydown",e=>{ if(e.key==="Enter"){e.preventDefault();$("savePaid").click();} });
+$("modalBg").addEventListener("click",e=>{ if(e.target===$("modalBg")) closePaid(); });
+
+/* scanner */
+function rearm(){ const t=$("trap"); t.value=""; t.focus(); }
 function arm(){
-  armed = true;
-  $("scanBtn").textContent = "Ready — scan now";
+  armed=true;
+  $("scanLabel").textContent="Ready";
   $("scanBtn").classList.add("armed");
-  $("certBox").classList.add("hot");
-  const t = $("trap");
-  t.value = "";
-  t.focus();
+  rearm();
 }
-
 function disarm(){
-  armed = false;
-  $("scanBtn").textContent = "Scan slab";
+  armed=false;
+  $("scanLabel").textContent="Scan slab";
   $("scanBtn").classList.remove("armed");
-  $("certBox").classList.remove("hot");
   $("trap").blur();
 }
-
-$("trap").addEventListener("keydown", e => {
-  if(e.key === "Enter"){
+$("trap").addEventListener("keydown", e=>{
+  if(e.key==="Enter"){
     e.preventDefault();
-    const code = $("trap").value.trim();
-    $("trap").value = "";
-    if(code){
-      setCert(code);
-      setVal(0);
-      if(navigator.vibrate) navigator.vibrate(35);
-      toast("Scanned " + cert);
-      disarm();
-    }
+    const code=$("trap").value.trim().replace(/\D/g,"");
+    $("trap").value="";
+    if(code){ if(navigator.vibrate)navigator.vibrate(28); addCert(code); }
   }
 });
-
-$("trap").addEventListener("blur", () => {
-  if(armed) setTimeout(() => { if(armed) $("trap").focus(); }, 60);
+$("trap").addEventListener("blur", ()=>{
+  if(armed && !pendingId && !deleteId) setTimeout(()=>{if(armed&&!pendingId&&!deleteId)$("trap").focus();},60);
 });
 
-/* ---------- saving ---------- */
-async function post(params){
-  const url = ENDPOINT + "?" + new URLSearchParams(params).toString();
-  const res = await fetch(url, {method:"GET", redirect:"follow"});
-  if(!res.ok) throw new Error("HTTP " + res.status);
-  return res.json();
-}
+$("scanBtn").onclick=()=> armed?disarm():arm();
 
-async function send(certNum, value){
-  const line = addEntry(certNum, value);
-  try{
-    const out = await post({cert:certNum, value:value || ""});
-    if(out.error) throw new Error(out.error);
-    line.className = "entry ok";
-    saved++;
-    $("count").textContent = saved + " saved";
-    return true;
-  }catch(err){
-    line.className = "entry err";
-    toast("Save failed: " + err.message, true, 5000);
-    return false;
-  }
-}
-
-function addEntry(certNum, value){
-  const d = document.createElement("div");
-  d.className = "entry pend";
-  d.innerHTML = '<i class="dot"></i><b>' + certNum + '</b><span>' +
-                (value ? "$" + Number(value).toLocaleString() : "—") + '</span>';
-  $("log").prepend(d);
-  return d;
-}
-
-/* ---------- buttons ---------- */
-$("scanBtn").onclick = () => armed ? disarm() : arm();
-
-$("clBtn").onclick = () =>
-  window.open(CARD_LADDER + encodeURIComponent(cert), "_blank");
-
-$("psaBtn").onclick = () =>
-  window.open("https://www.psacard.com/cert/" + cert + "/psa", "_blank");
-
-$("saveBtn").onclick = async () => {
-  if(!cert) return;
-  toast("Saving…");
-  const ok = await send(cert, val || "");
-  if(ok){
-    toast(val ? "Saved " + cert + " → $" + val.toLocaleString() : "Saved " + cert);
-    setVal(0);
-    setCert("");
-    arm();
-  }
+$("copyBtn").onclick=async ()=>{
+  if(!rows.length) return;
+  const ordered=[...rows].reverse();
+  const tsv=["Cert Number\tPaid",
+    ...ordered.map(r=>[r.cert||"", r.paid?("$"+r.paid):""].join("\t"))].join("\n");
+  try{ await navigator.clipboard.writeText(tsv); }
+  catch(e){ const ta=document.createElement("textarea");ta.value=tsv;document.body.appendChild(ta);ta.select();document.execCommand("copy");ta.remove(); }
+  const btn=$("copyBtn"), was=btn.textContent;
+  btn.textContent="Copied "+rows.length+" rows";
+  setTimeout(()=>btn.textContent=was,1600);
 };
 
-$("testBtn").onclick = async () => {
-  toast("Testing…");
-  try{
-    const out = await post({ping:"1"});
-    toast(out.status ? "Connected — " + out.status : "Reached it, odd reply", false, 4000);
-  }catch(err){
-    toast("No connection: " + err.message, true, 6000);
-  }
-};
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden&&armed&&!pendingId&&!deleteId)$("trap").focus(); });
 
-document.addEventListener("visibilitychange", () => {
-  if(!document.hidden && armed) $("trap").focus();
-});
+render();
 </script>
 </body>
 </html>

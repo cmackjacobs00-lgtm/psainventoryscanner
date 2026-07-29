@@ -114,6 +114,20 @@
   .modal-btns button{flex:1}
   .modal-btns .skip{background:var(--card);border:1px solid var(--rule);color:var(--soft);font-weight:500}
 
+
+  /* custom number pad */
+  .amount input{caret-color:var(--blue)}
+  .keypad{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px;
+  }
+  .keypad button{
+    background:var(--card);color:var(--ink);border:1px solid var(--rule);
+    border-radius:12px;padding:16px 0;font-size:24px;font-weight:600;
+    font-variant-numeric:tabular-nums;
+  }
+  .keypad button:active{background:#efece4}
+  .keypad .kp-del{font-size:20px}
+
   /* delete confirm */
   .del-modal .warn{font-size:17px;font-weight:700;color:var(--ink);margin-bottom:6px}
   .del-modal .sub{font-size:14px;color:var(--soft);margin-bottom:6px}
@@ -175,7 +189,13 @@
     <div class="cert-echo" id="modalCert">Cert —</div>
     <div class="amount">
       <span class="sym">$</span>
-      <input id="paidInput" type="text" inputmode="decimal" placeholder="0.00">
+      <input id="paidInput" type="text" inputmode="none" readonly placeholder="0.00">
+    </div>
+    <div class="keypad" id="keypad">
+      <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button>
+      <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button>
+      <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
+      <button data-k=".">.</button><button data-k="0">0</button><button class="kp-del" data-k="del">⌫</button>
     </div>
     <div class="modal-btns">
       <button class="skip" id="skipPaid">Skip</button>
@@ -277,7 +297,6 @@ function openPaid(id, cert){
   $("modalCert").textContent="Cert "+cert;
   $("paidInput").value="";
   $("modalBg").classList.add("show");
-  setTimeout(()=>$("paidInput").focus(),80);
 }
 function closePaid(){ $("modalBg").classList.remove("show"); pendingId=null; if(armed) rearm(); }
 
@@ -290,6 +309,21 @@ $("savePaid").onclick=()=>{
 $("skipPaid").onclick=closePaid;
 $("paidInput").addEventListener("keydown",e=>{ if(e.key==="Enter"){e.preventDefault();$("savePaid").click();} });
 $("modalBg").addEventListener("click",e=>{ if(e.target===$("modalBg")) closePaid(); });
+
+/* custom number pad drives the paid field */
+$("keypad").addEventListener("click", e=>{
+  const b=e.target.closest("[data-k]"); if(!b) return;
+  const k=b.dataset.k;
+  let v=$("paidInput").value;
+  if(k==="del"){ v=v.slice(0,-1); }
+  else if(k==="."){ if(!v.includes(".")) v = v===""? "0." : v+"."; }
+  else {
+    // block more than 2 decimal places
+    if(v.includes(".") && v.split(".")[1].length>=2) return;
+    v = v + k;
+  }
+  $("paidInput").value=v;
+});
 
 /* scanner */
 function rearm(){ const t=$("trap"); t.value=""; t.focus(); }

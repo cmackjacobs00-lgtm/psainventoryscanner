@@ -52,11 +52,13 @@
     font:inherit;font-weight:600;font-size:15px;
     border:0;border-radius:10px;padding:14px 16px;cursor:pointer;
     background:var(--blue);color:#fff;
-    transition:transform .06s ease, background .12s ease;
+    transition:transform .09s ease-out, background .09s ease-out;
+    touch-action:manipulation;
   }
-  button:active{background:var(--blue-press);transform:scale(.97)}
+  button.pressed{background:var(--blue-press);transform:scale(.96)}
   .scan{flex:1;display:flex;align-items:center;justify-content:center;gap:9px;font-size:16px}
   .scan.armed{background:var(--green)}
+  .scan.armed.pressed{background:#256b4c}
   .scan svg{width:18px;height:18px;stroke:#fff;stroke-width:2;fill:none}
 
   .head{
@@ -85,7 +87,7 @@
   .cell:focus{background:#FFF7DE;border-radius:5px}
   .c-x{width:36px;display:flex;align-items:center;justify-content:flex-end}
   .c-x button{background:none;color:var(--red);padding:12px 2px 12px 12px;font-size:16px;font-weight:400}
-  .c-x button:active{background:none;transform:scale(.9)}
+  .c-x button.pressed{background:none;transform:scale(.86)}
 
   .empty{padding:56px 30px;text-align:center;color:var(--soft);font-size:15px;line-height:1.7}
   .empty b{color:var(--blue)}
@@ -122,7 +124,7 @@
     border-radius:12px;padding:16px 0;font-size:24px;font-weight:600;
     font-variant-numeric:tabular-nums;
   }
-  .keypad button:active{background:#efece4;transform:scale(.96)}
+  .keypad button.pressed{background:#efece4;transform:scale(.94)}
   .keypad .kp-del{font-size:20px}
 
   .modal-btns{display:flex;gap:10px}
@@ -143,7 +145,7 @@
 
   .foot{flex:none;display:flex;padding:11px 18px;border-top:1px solid var(--rule);background:var(--paper)}
   .foot button{flex:1;background:var(--card);color:var(--ink);border:1px solid var(--rule);font-weight:500}
-  .foot button:active{background:#efece4}
+  .foot button.pressed{background:#efece4;transform:scale(.98)}
   @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -388,6 +390,19 @@ $("copyBtn").onclick=async ()=>{
 };
 
 document.addEventListener("visibilitychange",()=>{ if(!document.hidden&&armed&&!pendingId&&!deleteId)$("trap").focus(); });
+
+
+/* reliable button press feedback on iOS (touch-driven) */
+(function(){
+  function press(e){ const b=e.target.closest("button"); if(b) b.classList.add("pressed"); }
+  function release(){ document.querySelectorAll("button.pressed").forEach(b=>b.classList.remove("pressed")); }
+  document.addEventListener("touchstart",press,{passive:true});
+  document.addEventListener("touchend",release,{passive:true});
+  document.addEventListener("touchcancel",release,{passive:true});
+  document.addEventListener("mousedown",press);
+  document.addEventListener("mouseup",release);
+  document.addEventListener("mouseleave",release);
+})();
 
 render();
 </script>
